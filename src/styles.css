@@ -1,0 +1,22 @@
+/* You can add global styles to this file, and also import other style files */
+main {
+    display: grid;
+    min-height: 100dvh;
+    grid-template-rows: 80px 1fr;
+}
+
+.center {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 20px
+}
+
+h1 {
+    font-size: 32px;
+    text-transform: uppercase;
+    text-align: center;
+    line-height: 80px;
+    margin: 0;
+}
