@@ -14,4 +14,8 @@ export const routes: Routes = [
         path: 'hall',
         loadComponent: () => import('./hall/hall').then((mod) => mod.Hall),
     },
+    {
+        path: '**',
+        redirectTo: 'home'
+    }
 ];

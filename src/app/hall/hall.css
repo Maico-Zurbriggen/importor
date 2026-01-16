@@ -1,0 +1,89 @@
+.section-hall {
+    justify-content: start;
+    height: auto;
+}
+
+.code-container {
+    width: 400px;
+    height: 40px;
+    border-radius: 50px;
+    background-color: var(--game-text);
+    color: var(--game-background);
+}
+.code-container:hover {
+    cursor: pointer;
+}
+
+.code-container p {
+    font-size: 18px;
+    text-align: center;
+    text-transform: uppercase;
+    line-height: 40px;
+    font-weight: bold;
+}
+
+.mat-mdc-select {
+  background-color: var(--game-text);   
+  color: var(--game-background);              
+  width: 400px;               
+  height: 40px;
+  border-radius: 50px;
+}
+
+.mat-select {
+    text-align: center;
+    line-height: 40px;
+    font-weight: bold;
+}
+
+.players-container {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+}
+
+.player-container {
+    display: flex;
+    justify-content: start;
+    align-items: center;
+    flex-direction: column;
+    gap: 5px;
+    width: 80px;
+    height: 80px;
+    font-size: 18px;
+    font-weight: bold;
+    padding: 20px 0;
+    cursor: default;
+}
+
+.player1 {
+    background-color: var(--player-color-1);
+}
+
+.player2 {
+    background-color: var(--player-color-2);
+}
+
+.player3 {
+    background-color: var(--player-color-3);
+}
+
+.player4 {
+    background-color: var(--player-color-4);
+}
+
+.player5 {
+    background-color: var(--player-color-5);
+}
+
+.player6 {
+    background-color: var(--player-color-6);
+}
+
+.player7 {
+    background-color: var(--player-color-7);
+}
+
+.player8 {
+    background-color: var(--player-color-8);
+}

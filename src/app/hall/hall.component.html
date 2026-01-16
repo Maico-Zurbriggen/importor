@@ -1,0 +1,38 @@
+<section class="center section-hall">
+    <button mat-icon-button aria-label="Volver atrás" routerLink="/home" class="btn-fixed">
+        <mat-icon>arrow_back</mat-icon>
+    </button>
+    <h2>Sala</h2>
+    <section class="center section-hall">
+        <section class="code-container" (click)="copyCode($event)">
+            <p>Código de sala: <span class="code">{{code()}}</span></p>
+        </section>
+        <mat-select class="mat-select" (change)="onChangeCategory($event)" [value]="selectedCategory()">
+            @for(category of categories; track category){
+            <mat-option [value]="category">
+                {{ category }}
+            </mat-option>
+            }
+        </mat-select>
+        <mat-select class="mat-select" (change)="onChangeNumberImpostors($event)" [value]="selectedNumberImpostors()">
+            <mat-option [value]="0">
+                Cantidad de impostores
+            </mat-option>
+            <mat-option [value]="1">
+                1
+            </mat-option>
+            <mat-option [value]="2">
+                2
+            </mat-option>
+        </mat-select>
+    </section>
+    <section class="players-container">
+        <section *ngFor="let player of players ; let i = index" class="player-container" [ngClass]="'player' + (i + 1)">
+            <p>{{ player.name }}</p>
+            @if(player.isAdmin){
+            <p>Admin</p>
+            }
+        </section>
+    </section>
+    <button mat-raised-button color="primary" class="btn">Jugar</button>
+</section>

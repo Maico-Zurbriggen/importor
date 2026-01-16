@@ -35,3 +35,20 @@ body {
   margin: 0;
   height: 100%;
 }
+
+:root {
+  /* Colores para los jugadores (Impostor Game) */
+  --player-color-1: #f44336; /* Red */
+  --player-color-2: #2196f3; /* Blue */
+  --player-color-3: #4caf50; /* Green */
+  --player-color-4: #e91e63; /* Pink */
+  --player-color-5: #ff9800; /* Orange */
+  --player-color-6: #d1be15; /* Yellow */
+  --player-color-7: #9c27b0; /* Purple */
+  --player-color-8: #00bcd4; /* Cyan */
+
+  /* Colores globales del juego */
+  --game-background: #1e1e2f; /* Dark Blue/Grey Background */
+  --game-text: #eceff1; /* Light Grey Text */
+  --game-surface: #27293d; /* Slightly lighter for cards/containers */
+}
