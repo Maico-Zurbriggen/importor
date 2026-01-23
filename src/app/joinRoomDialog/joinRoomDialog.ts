@@ -4,6 +4,12 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { ReactiveFormsModule, FormControl, Validators } from '@angular/forms';
+import { HttpClient } from '@angular/common/http';
+import { inject } from '@angular/core';
+import { firstValueFrom } from 'rxjs';
+import { Router } from '@angular/router';
+
+import type { Room } from '../../types';
 
 @Component({
     selector: 'join-room-dialog',
@@ -22,7 +28,7 @@ import { ReactiveFormsModule, FormControl, Validators } from '@angular/forms';
         }
         @if (codeControl.hasError('pattern')) {
             <mat-error>
-                Debe ser un número de 6 dígitos
+                Debe ser una cadena de 6 dígitos
             </mat-error>
         }
       </mat-form-field>
@@ -36,17 +42,41 @@ import { ReactiveFormsModule, FormControl, Validators } from '@angular/forms';
   `,
 })
 export class JoinRoomDialog {
-    codeControl = new FormControl('', [Validators.required, Validators.pattern(/^\d{6}$/)]);
+  http = inject(HttpClient);
+  router = inject(Router);
+  codeControl = new FormControl('', [Validators.required, Validators.pattern(/^[A-Za-z0-9]{6}$/
+)]);
 
-    constructor(private dialogRef: MatDialogRef<JoinRoomDialog>) { }
+  constructor(private dialogRef: MatDialogRef<JoinRoomDialog>) { }
 
-    close() {
-        this.dialogRef.close();
+  close() {
+    this.dialogRef.close();
+  }
+
+  async join() {
+    if (!localStorage.getItem('name')) {
+      alert('Debe ingresar un nombre para unir la sala');
+      return;
     }
+    if (this.codeControl.valid) {
+      try {
+        const response = await firstValueFrom(this.http.get<Room>(`http://localhost:5261/api/hall/${this.codeControl.value}`, {
+          params: {
+            name: localStorage.getItem('name') || ''
+          }
+        }));
 
-    join() {
-        if (this.codeControl.valid) {
-            this.dialogRef.close(this.codeControl.value);
-        }
+        console.log(response);
+
+        this.dialogRef.close(this.codeControl.value);
+        this.router.navigate(['/hall'], { state: { code: response['code'], players: response['players'] } });
+      } catch (error) {
+        alert('Error al unirse a la sala');
+      } finally {
+        this.dialogRef.close(this.codeControl.value);
+      }
+    } else {
+      alert('Debe ingresar un código válido');
     }
+  }
 }

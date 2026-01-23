@@ -15,6 +15,10 @@ export const routes: Routes = [
         loadComponent: () => import('./hall/hall').then((mod) => mod.Hall),
     },
     {
+        path: 'game',
+        loadComponent: () => import('./game/game').then((mod) => mod.Game),
+    },
+    {
         path: '**',
         redirectTo: 'home'
     }

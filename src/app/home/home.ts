@@ -1,5 +1,4 @@
 import { Component } from '@angular/core';
-import { RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -28,7 +27,8 @@ export class Home {
 
   constructor(private dialog: MatDialog){}
   joinRoom(){
-    if(this.nameControl.valid) {
+    if(this.nameControl.valid && this.nameControl.value) {
+      localStorage.setItem('name', this.nameControl.value);
       this.dialog.open(JoinRoomDialog, {
         width: '400px',
         data: {

@@ -11,7 +11,7 @@
     color: var(--game-background);
 }
 .code-container:hover {
-    cursor: pointer;
+    cursor: pointer !important;
 }
 
 .code-container p {
@@ -21,6 +21,9 @@
     line-height: 40px;
     font-weight: bold;
 }
+.code-container p:hover {
+    cursor: pointer !important;
+}
 
 .mat-mdc-select {
   background-color: var(--game-text);   
@@ -28,6 +31,11 @@
   width: 400px;               
   height: 40px;
   border-radius: 50px;
+}
+
+.mat-mdc-select-disabled {
+    background-color: var(--game-surface);
+    color: var(--game-text-dark);
 }
 
 .mat-select {
