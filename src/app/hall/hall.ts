@@ -40,10 +40,12 @@ export class Hall {
     }
     this.noAdmin.set(!localStorage.getItem('adminName'));
 
+    const state = history.state as { code: string; players: string[], fromHall: boolean | undefined };
+
     this.signalRService.startConnection();
 
     this.signalRService.onPlayerJoined((playerName) => {
-      console.log('Jugador unido: ' + playerName);
+      console.log('Un jugador se ha unido: ' + playerName);
       this.players.update((players) => {
         if (players.includes(playerName)) {
           return players;
@@ -53,19 +55,34 @@ export class Hall {
     });
 
     this.signalRService.onPlayerLeft((playerName) => {
-      console.log('Jugador salido: ' + playerName);
+      console.log('Un jugador se ha ido: ' + playerName);
       this.players.update((players) => players.filter((p) => p !== playerName));
     });
 
     this.signalRService.onGameStarted((role) => {
       console.log(role);
       if (role) {
-        this.router.navigate(['/game'], { state: { role: role, code: this.code() } });
+        this.router.navigate(['/game'], { state: { role: role, code: this.code(), noAdmin: this.noAdmin(), selectedNumberImpostors: this.selectedNumberImpostors(), selectedCategory: this.selectedCategory() } });
       } else {
-        alert("Ups algo ha salido mal.");
+        alert('Ups algo ha salido mal.');
         this.router.navigate(['/']);
       }
+    });
+
+    this.signalRService.onGameEnded((code) => {
+      if (code === this.code()) {
+        this.router.navigate(['/'], { state: { code: this.code(), fromHall: true } });
+      }
+    });
+
+    this.signalRService.onUpdatePlayers((players) => {
+      this.players.set(players);
     })
+
+    if (state.fromHall) {
+      this.code.set(state.code);
+      this.signalRService.updatePlayers(state.code);
+    }
 
     if (!this.noAdmin()) {
       try {
@@ -82,7 +99,6 @@ export class Hall {
         console.error('Error al crear la sala:', error);
       }
     } else {
-      const state = history.state as { code: string; players: string[] };
       if (state) {
         this.code.set(state.code);
         this.players.set(state.players);
@@ -100,6 +116,25 @@ export class Hall {
     setTimeout(() => {
       this.signalRService.onHallConnect(this.code(), name);
     }, 500);
+  }
+
+  async ngOnDestroy() {
+    try {
+      const response = await firstValueFrom(
+        this.http.delete(`http://localhost:5261/api/hall/${this.code()}`, {
+          params: {
+            name: localStorage.getItem('name') || localStorage.getItem('adminName') || '',
+          },
+        }),
+      );
+      if (response) {
+        localStorage.removeItem('name');
+        localStorage.removeItem('adminName');
+        this.router.navigate(['/']);
+      }
+    } catch (error) {
+      console.error('Error al salir de la sala:', error);
+    }
   }
 
   onChangeCategory(event: MatSelectChange) {
@@ -147,7 +182,6 @@ export class Hall {
 
   startGame() {
     if (this.selectedNumberImpostors() === 0) {
-      console.log(this.selectedNumberImpostors());
       alert('Debes seleccionar un número de impostores');
       return;
     }

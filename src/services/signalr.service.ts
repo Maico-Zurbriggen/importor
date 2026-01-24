@@ -31,11 +31,26 @@ export class SignalRService {
   }
 
   startGame(code: string, numberImpostors: number, category: string) {
-    console.log(numberImpostors);
     this.hubConnection.invoke('StartGame', code, numberImpostors, category);
+  }
+
+  goToHall(code: string) {
+    this.hubConnection.invoke('GoToHall', code);
   }
 
   onGameStarted(callback: (role: string) => void) {
     this.hubConnection.on('RoleAssigned', callback);
+  }
+
+  onGameEnded(callback: (code: string) => void) {
+    this.hubConnection.on('GameEnded', callback);
+  }
+
+  updatePlayers(code: string) {
+    this.hubConnection.invoke('UpdatePlayers', code);
+  }
+
+  onUpdatePlayers(callback: (players: string[]) => void) {
+    this.hubConnection.on('UpdatePlayers', callback);
   }
 }
