@@ -10,6 +10,7 @@ import { firstValueFrom } from 'rxjs';
 import { Router } from '@angular/router';
 
 import type { Room } from '../../types';
+import { environment } from '../../environments/environment';
 
 @Component({
     selector: 'join-room-dialog',
@@ -44,8 +45,9 @@ import type { Room } from '../../types';
 export class JoinRoomDialog {
   http = inject(HttpClient);
   router = inject(Router);
-  codeControl = new FormControl('', [Validators.required, Validators.pattern(/^[A-Za-z0-9]{6}$/
-)]);
+  codeControl = new FormControl('', [Validators.required, Validators.pattern(/^[A-Za-z0-9]{6}$/)]);
+
+  private apiUrl = environment.apiUrl;
 
   constructor(private dialogRef: MatDialogRef<JoinRoomDialog>) { }
 
@@ -60,7 +62,7 @@ export class JoinRoomDialog {
     }
     if (this.codeControl.valid) {
       try {
-        const response = await firstValueFrom(this.http.get<Room>(`http://localhost:5261/api/hall/${this.codeControl.value}`, {
+        const response = await firstValueFrom(this.http.get<Room>(`${this.apiUrl}/hall/${this.codeControl.value}`, {
           params: {
             name: localStorage.getItem('name') || ''
           }

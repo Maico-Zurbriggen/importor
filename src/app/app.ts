@@ -1,5 +1,6 @@
 import { Component } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
+import { SignalRService } from '../services/signalr.service';
 
 @Component({
   selector: 'app-root',
@@ -15,4 +16,9 @@ import { RouterOutlet } from '@angular/router';
   `,
 })
 export class App {
+  constructor(private signalRService: SignalRService) {}
+
+  ngOnInit() {
+    this.signalRService.startConnection();
+  }
 }

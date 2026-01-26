@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import * as signalR from '@microsoft/signalr';
+import { environment } from '../environments/environment';
 
 @Injectable({
   providedIn: 'root',
@@ -8,8 +9,12 @@ export class SignalRService {
   private hubConnection!: signalR.HubConnection;
 
   startConnection() {
+    if (this.hubConnection && this.hubConnection.state === signalR.HubConnectionState.Connected) {
+      return;
+    }
+
     this.hubConnection = new signalR.HubConnectionBuilder()
-      .withUrl('http://localhost:5261/gamehub')
+      .withUrl(`${environment.apiUrl}/gamehub`)
       .build();
 
     this.hubConnection
@@ -31,6 +36,7 @@ export class SignalRService {
   }
 
   startGame(code: string, numberImpostors: number, category: string) {
+    console.log(code, numberImpostors, category);
     this.hubConnection.invoke('StartGame', code, numberImpostors, category);
   }
 
@@ -38,7 +44,7 @@ export class SignalRService {
     this.hubConnection.invoke('GoToHall', code);
   }
 
-  onGameStarted(callback: (role: string) => void) {
+  onGameStarted(callback: (role: string, urlImage: string) => void) {
     this.hubConnection.on('RoleAssigned', callback);
   }
 

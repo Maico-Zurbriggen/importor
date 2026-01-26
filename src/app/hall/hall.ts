@@ -9,7 +9,7 @@ import { inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { SignalRService } from '../../services/signalr.service';
 
-import type { Room } from '../../types';
+import { environment } from '../../environments/environment';
 
 @Component({
   selector: 'hall',
@@ -27,6 +27,9 @@ export class Hall {
   selectedNumberImpostors = signal(0);
   selectedCategory = signal('');
   players = signal<string[]>([]);
+  inGame = false;
+
+  private apiUrl = environment.apiUrl;
 
   constructor(private signalRService: SignalRService) {}
 
@@ -40,18 +43,15 @@ export class Hall {
     }
     this.noAdmin.set(!localStorage.getItem('adminName'));
 
-    const state = history.state as { code: string; players: string[], fromHall: boolean | undefined };
-
-    this.signalRService.startConnection();
+    const state = history.state as {
+      code: string;
+      players: string[];
+      fromGame: boolean | undefined;
+    };
 
     this.signalRService.onPlayerJoined((playerName) => {
       console.log('Un jugador se ha unido: ' + playerName);
-      this.players.update((players) => {
-        if (players.includes(playerName)) {
-          return players;
-        }
-        return [...players, playerName];
-      });
+      this.signalRService.updatePlayers(this.code());
     });
 
     this.signalRService.onPlayerLeft((playerName) => {
@@ -59,19 +59,22 @@ export class Hall {
       this.players.update((players) => players.filter((p) => p !== playerName));
     });
 
-    this.signalRService.onGameStarted((role) => {
-      console.log(role);
+    this.signalRService.onGameStarted((role, urlImage) => {
       if (role) {
-        this.router.navigate(['/game'], { state: { role: role, code: this.code(), noAdmin: this.noAdmin(), selectedNumberImpostors: this.selectedNumberImpostors(), selectedCategory: this.selectedCategory() } });
+        this.router.navigate(['/game'], {
+          state: {
+            role: role,
+            urlImage: urlImage,
+            code: this.code(),
+            noAdmin: this.noAdmin(),
+            selectedNumberImpostors: this.selectedNumberImpostors(),
+            selectedCategory: this.selectedCategory(),
+          },
+        });
+        this.inGame = true;
       } else {
         alert('Ups algo ha salido mal.');
         this.router.navigate(['/']);
-      }
-    });
-
-    this.signalRService.onGameEnded((code) => {
-      if (code === this.code()) {
-        this.router.navigate(['/'], { state: { code: this.code(), fromHall: true } });
       }
     });
 
@@ -79,34 +82,18 @@ export class Hall {
       this.players.set(players);
     })
 
-    if (state.fromHall) {
+    if (state) {
+      this.code.set(state.code);
+      this.players.set(state.players);
+    }
+
+    if (state.fromGame) {
       this.code.set(state.code);
       this.signalRService.updatePlayers(state.code);
     }
 
-    if (!this.noAdmin()) {
-      try {
-        const response: Room = await firstValueFrom(
-          this.http.post<Room>('http://localhost:5261/api/hall', {
-            adminName: name,
-          }),
-        );
-
-        this.players.set(response.players);
-
-        this.code.set(response['code']);
-      } catch (error) {
-        console.error('Error al crear la sala:', error);
-      }
-    } else {
-      if (state) {
-        this.code.set(state.code);
-        this.players.set(state.players);
-      }
-    }
-
     const categoriesResponse = await firstValueFrom(
-      this.http.get<string[]>('http://localhost:5261/api/category'),
+      this.http.get<string[]>(`${this.apiUrl}/category`),
     );
     if (categoriesResponse) {
       this.categories = categoriesResponse;
@@ -119,21 +106,8 @@ export class Hall {
   }
 
   async ngOnDestroy() {
-    try {
-      const response = await firstValueFrom(
-        this.http.delete(`http://localhost:5261/api/hall/${this.code()}`, {
-          params: {
-            name: localStorage.getItem('name') || localStorage.getItem('adminName') || '',
-          },
-        }),
-      );
-      if (response) {
-        localStorage.removeItem('name');
-        localStorage.removeItem('adminName');
-        this.router.navigate(['/']);
-      }
-    } catch (error) {
-      console.error('Error al salir de la sala:', error);
+    if (!this.inGame) {
+      await this.goBack();
     }
   }
 
@@ -161,15 +135,17 @@ export class Hall {
   }
 
   async goBack() {
+    if (!localStorage.getItem('name') && !localStorage.getItem('adminName')) {
+      return;
+    }
     try {
       const response = await firstValueFrom(
-        this.http.delete(`http://localhost:5261/api/hall/${this.code()}`, {
+        this.http.delete(`${this.apiUrl}/hall/${this.code()}`, {
           params: {
             name: localStorage.getItem('name') || localStorage.getItem('adminName') || '',
           },
         }),
       );
-      console.log(response);
       if (response) {
         localStorage.removeItem('name');
         localStorage.removeItem('adminName');
@@ -183,6 +159,10 @@ export class Hall {
   startGame() {
     if (this.selectedNumberImpostors() === 0) {
       alert('Debes seleccionar un número de impostores');
+      return;
+    }
+    if (this.players().length < this.selectedNumberImpostors() + 1) {
+      alert('No hay suficientes jugadores para el número de impostores seleccionado');
       return;
     }
     this.signalRService.startGame(
