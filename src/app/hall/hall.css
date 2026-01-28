@@ -95,3 +95,9 @@
 .player8 {
     background-color: var(--player-color-8);
 }
+
+@media screen and (max-width: 768px) {
+    .mat-mdc-select, .code-container {
+        width: 300px;
+    }
+}

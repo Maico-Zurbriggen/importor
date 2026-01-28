@@ -19,7 +19,7 @@ import { environment } from '../../environments/environment';
         <mat-icon>arrow_back</mat-icon>
       </button>
       <h1>{{ role() }}</h1>
-      <img [src]="urlImage()" alt="Imagen de item de juego" height="300" width="500">
+      <img [src]="urlImage()" alt="Imagen de item de juego" height="300" width="400">
       <button mat-raised-button color="primary" class="btn" [disabled]="noAdmin()" (click)="startGame()">Siguiente ronda</button>
       <button mat-raised-button color="accent" class="btn" [disabled]="noAdmin()" (click)="goToHall()">Volver a la sala</button>
     </section>

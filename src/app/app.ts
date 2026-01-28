@@ -8,7 +8,6 @@ import { SignalRService } from '../services/signalr.service';
   standalone: true,
   template: `
   <main>
-    <h1>Impostor</h1>
     <section class="center">
       <router-outlet />
     </section>

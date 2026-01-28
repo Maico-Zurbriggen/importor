@@ -35,8 +35,8 @@ import { environment } from '../../environments/environment';
       </mat-form-field>
     </mat-dialog-content>
     <mat-dialog-actions align="end">
-      <button mat-button (click)="close()">Cancelar</button>
-      <button mat-raised-button color="primary" [disabled]="codeControl.invalid" (click)="join()">
+      <button class="btn-dialog" mat-button (click)="close()">Cancelar</button>
+      <button class="btn-dialog" mat-raised-button color="primary" [disabled]="codeControl.invalid" (click)="join()">
         Unirse
       </button>
     </mat-dialog-actions>

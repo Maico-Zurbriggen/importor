@@ -5,13 +5,19 @@
     box-sizing: border-box;
 }
 
+app-root {
+    height: 100%;
+    width: 100%;
+}
+
 main {
     display: grid;
     min-height: 100dvh;
-    grid-template-rows: 60px 1fr;
+    grid-template-rows: 1fr;
     background-color: var(--game-background);
     color: var(--game-text);
     user-select: none;
+    width: 100%;
 }
 
 home,
@@ -56,6 +62,10 @@ h2 {
     line-height: 40px;
 }
 
+button {
+    text-transform: uppercase !important;
+}
+
 button.btn {
     margin: 0;
     padding: 12px 24px;
@@ -63,6 +73,13 @@ button.btn {
     font-weight: bold;
     width: 400px;
     height: 50px;
+    background-color: var(--game-text) !important;
+    color: var(--game-background) !important;
+}
+
+button.btn:disabled {
+    background-color: var(--game-surface) !important;
+    color: var(--game-background) !important;
 }
 
 button.btn-fixed {
@@ -70,6 +87,16 @@ button.btn-fixed {
     top: 20px;
     left: 20px;
     background-color: var(--game-text);
+}
+
+button.btn-dialog {
+    background-color: var(--game-background) !important;
+    color: var(--game-text) !important;
+}
+
+button.btn-dialog:disabled {
+    background-color: var(--game-surface);
+    color: var(--game-background) !important;
 }
 
 .field {
@@ -91,4 +118,35 @@ button.btn-fixed {
 
 .field .mat-mdc-form-field-label {
     color: var(--game-text) !important;
+}
+
+@media screen and (max-width: 768px) {
+    .field {
+        width: 300px;
+    }
+
+    button.btn {
+        width: 300px;
+    }
+}
+
+mat-dialog-container {
+    background-color: var(--game-text);
+    border-radius: 30px;
+}
+
+mat-icon {
+    color: var(--game-background) !important;
+}
+
+div.mat-mdc-select-panel {
+    background-color: var(--game-text) !important;
+    color: var(--game-background) !important;
+}
+
+@media screen and (max-width: 768px) {
+    img {
+        width: 300px;
+        height: 200px;
+    }
 }

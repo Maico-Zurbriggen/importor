@@ -56,6 +56,11 @@ export class Hall {
 
     this.signalRService.onPlayerLeft((playerName) => {
       console.log('Un jugador se ha ido: ' + playerName);
+      if (name === this.players()[1] && playerName === this.players()[0]) {
+        this.noAdmin.set(false);
+        localStorage.setItem('adminName', name);
+        localStorage.removeItem('name');
+      }
       this.players.update((players) => players.filter((p) => p !== playerName));
     });
 
