@@ -7,11 +7,7 @@ import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { JoinRoomDialog } from '../joinRoomDialog/joinRoomDialog';
 import { Router } from '@angular/router';
 import { inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { firstValueFrom } from 'rxjs';
-
-import type { Room } from '../../types';
-import { environment } from '../../environments/environment';
+import { SignalRService } from '../../services/signalr.service';
 
 @Component({
   selector: 'home',
@@ -26,34 +22,32 @@ import { environment } from '../../environments/environment';
   templateUrl: './home.component.html',
 })
 export class Home {
-  http = inject(HttpClient);
   router = inject(Router);
   nameControl = new FormControl('', Validators.required);
   
-  private apiUrl = environment.apiUrl;
+  constructor(
+    private signalRService: SignalRService,
+    private dialog: MatDialog
+  ) {}
 
-  async createRoom() {
+  ngOnInit() {
+    this.signalRService.onEnterRoom((code: string) => {
+      this.router.navigate(['/hall'], { queryParams: { code, name: this.nameControl.value } });
+    })
+  }
+
+  createRoom() {
     if (this.nameControl.value && this.nameControl.valid) {
-      localStorage.setItem('adminName', this.nameControl.value);
-
       try {
-        const response: Room = await firstValueFrom(
-          this.http.post<Room>(`${this.apiUrl}/hall`, {
-            adminName: this.nameControl.value,
-          }),
-        );
-
-        this.router.navigate(['/hall'], { state: { code: response['code'], players: response.players } });
+        this.signalRService.onCreateRoom(this.nameControl.value);
       } catch (error) {
         console.error('Error al crear la sala:', error);
       }
     }
   }
 
-  constructor(private dialog: MatDialog) {}
   joinRoom() {
     if (this.nameControl.valid && this.nameControl.value) {
-      localStorage.setItem('name', this.nameControl.value);
       this.dialog.open(JoinRoomDialog, {
         width: '400px',
         data: {

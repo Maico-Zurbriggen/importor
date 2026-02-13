@@ -1,0 +1,24 @@
+<section class="center">
+  <h1>{{ role() }}</h1>
+  @if (role() == 'Impostor' && clue()) {
+    <h2>{{ gameItemClue() }}</h2>
+  }
+  <img [src]="urlImage()" alt="Imagen de item de juego" height="300" width="400" />
+  <button
+    mat-raised-button
+    color="primary"
+    class="btn"
+    [disabled]="noAdmin()"
+    (click)="startGame()"
+  >
+    Siguiente ronda
+  </button>
+  <button mat-raised-button color="accent" class="btn" [disabled]="noAdmin()" (click)="goToHall()">
+    Volver a la sala
+  </button>
+  @if (virtualVoting()) {
+    <button mat-raised-button color="primary" class="btn" [disabled]="noAdmin()" (click)="vote()">
+      Votar
+    </button>
+  }
+</section>

@@ -19,5 +19,9 @@ export class App {
 
   ngOnInit() {
     this.signalRService.startConnection();
+
+    this.signalRService.onError((error: string) => {
+      alert(error)
+    })
   }
 }

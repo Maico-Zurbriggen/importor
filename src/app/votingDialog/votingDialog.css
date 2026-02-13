@@ -1,0 +1,51 @@
+.players-container {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+}
+
+.player-container {
+    display: flex;
+    justify-content: start;
+    align-items: center;
+    flex-direction: column;
+    gap: 5px;
+    width: 100%;
+    height: 80px;
+    font-size: 18px;
+    font-weight: bold;
+    padding: 20px 0;
+    cursor: default;
+}
+
+.player1 {
+    background-color: var(--player-color-1);
+}
+
+.player2 {
+    background-color: var(--player-color-2);
+}
+
+.player3 {
+    background-color: var(--player-color-3);
+}
+
+.player4 {
+    background-color: var(--player-color-4);
+}
+
+.player5 {
+    background-color: var(--player-color-5);
+}
+
+.player6 {
+    background-color: var(--player-color-6);
+}
+
+.player7 {
+    background-color: var(--player-color-7);
+}
+
+.player8 {
+    background-color: var(--player-color-8);
+}

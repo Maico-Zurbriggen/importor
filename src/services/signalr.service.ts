@@ -23,20 +23,59 @@ export class SignalRService {
       .catch((err) => console.error('Error al conectar: ', err));
   }
 
-  onHallConnect(code: string, playerName: string) {
-    this.hubConnection.invoke('JoinGame', code, playerName);
+  // CONTROL DE CONEXIÓN
+
+  async reconnect(code: string, name: string) {
+    if (this.hubConnection.state === signalR.HubConnectionState.Disconnected) {
+      await this.hubConnection.start();
+    }
+
+    let retries = 0;
+    while (this.hubConnection.state !== signalR.HubConnectionState.Connected && retries < 10) {
+      await new Promise((res) => setTimeout(res, 200));
+      retries++;
+    }
+
+    if (this.hubConnection.state === signalR.HubConnectionState.Connected) {
+      await this.hubConnection.invoke('Reconnect', code, name);
+    } else {
+      console.error('No se pudo reconectar: estado actual', this.hubConnection.state);
+    }
   }
 
-  onPlayerJoined(callback: (playerName: string) => void) {
-    this.hubConnection.on('PlayerJoined', callback);
+  onError(callback: (error: string) => void) {
+    this.hubConnection.on('Error', callback);
   }
 
-  onPlayerLeft(callback: (playerName: string) => void) {
-    this.hubConnection.on('PlayerLeft', callback);
+  isConnected() {
+    return this.hubConnection && this.hubConnection.state === signalR.HubConnectionState.Connected;
   }
+
+  // CONTROL DE SALAS
+
+  onCreateRoom(name: string) {
+    this.hubConnection.invoke('CreateRoom', name);
+  }
+
+  onEnterRoom(callback: (code: string) => void) {
+    this.hubConnection.on('EnterRoom', callback);
+  }
+
+  onJoinRoom(code: string, name: string) {
+    this.hubConnection.invoke('JoinRoom', code, name);
+  }
+
+  onLeaveRoom(code: string, name: string) {
+    this.hubConnection.invoke('LeaveRoom', code, name);
+  }
+
+  onGoHome(callback: () => void) {
+    this.hubConnection.on('GoHome', callback);
+  }
+
+  // CONTROL DE JUEGO
 
   startGame(code: string, numberImpostors: number, category: string) {
-    console.log(code, numberImpostors, category);
     this.hubConnection.invoke('StartGame', code, numberImpostors, category);
   }
 
@@ -52,11 +91,51 @@ export class SignalRService {
     this.hubConnection.on('GameEnded', callback);
   }
 
-  updatePlayers(code: string) {
-    this.hubConnection.invoke('UpdatePlayers', code);
+  onUpdatePlayers(code: string, name?: string) {
+    this.hubConnection.invoke('UpdatePlayers', code, name);
   }
 
-  onUpdatePlayers(callback: (players: string[]) => void) {
-    this.hubConnection.on('UpdatePlayers', callback);
+  onReceivePlayers(
+    callback: (
+      players: {
+        name: string;
+        isAdmin: boolean;
+        state: boolean;
+        isImpostor: boolean;
+        role: string;
+        urlImage: string;
+      }[],
+    ) => void,
+  ) {
+    this.hubConnection.on('ReceivePlayers', callback);
+  }
+
+  onVote(code: string) {
+    this.hubConnection.invoke('Vote', code);
+  }
+
+  onInitVoting(callback: () => void) {
+    this.hubConnection.on('InitVoting', callback);
+  }
+
+  onVotePlayer(code: string, playerVotedName: string, name: string) {
+    console.log(playerVotedName, code, name);
+    this.hubConnection.invoke('VotePlayer', playerVotedName, code, name);
+  }
+
+  onVotingResult(callback: (result: string) => void) {
+    this.hubConnection.on('VotingResult', callback);
+  }
+
+  onUpdateConfiguration(code: string, config: string, value: any) {
+    this.hubConnection.invoke('UpdateConfiguration', code, config, value);
+  }
+
+  onReceiveConfiguration(callback: (config: string, value: string | boolean | number) => void) {
+    this.hubConnection.on('ReceiveConfiguration', callback);
+  }
+
+  onChargeConfiguration(code: string, name?: string) {
+    this.hubConnection.invoke('ChargeConfiguration', code, name);
   }
 }

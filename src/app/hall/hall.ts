@@ -2,6 +2,7 @@ import { Component, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatSelectModule, MatSelectChange } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
+import { MatRadioModule, MatRadioChange } from '@angular/material/radio';
 import { MatIconModule } from '@angular/material/icon';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
@@ -15,115 +16,114 @@ import { environment } from '../../environments/environment';
   selector: 'hall',
   templateUrl: './hall.component.html',
   standalone: true,
-  imports: [CommonModule, MatSelectModule, MatButtonModule, MatIconModule],
+  imports: [CommonModule, MatSelectModule, MatButtonModule, MatIconModule, MatRadioModule],
   styleUrl: './hall.css',
 })
 export class Hall {
   http = inject(HttpClient);
   router = inject(Router);
+
   code = signal('');
+  name = signal('');
   noAdmin = signal(true);
+
   categories: string[] = [];
   selectedNumberImpostors = signal(0);
-  selectedCategory = signal('');
-  players = signal<string[]>([]);
-  inGame = false;
+  selectedCategory = signal('dibujos animados');
+  virtualVoting = signal(false);
+  clue = signal(false);
+
+  players = signal<{name: string, isAdmin: boolean, state: boolean, isImpostor: boolean, role: string, urlImage: string}[]>([]);
+  deletingPlayer = signal<string>('');
 
   private apiUrl = environment.apiUrl;
 
   constructor(private signalRService: SignalRService) {}
 
   async ngOnInit() {
-    var name = localStorage.getItem('name')
-      ? localStorage.getItem('name') || ''
-      : localStorage.getItem('adminName') || '';
-    if (!name) {
-      alert('No has ingresado un nombre');
+    const queryParams = this.router.parseUrl(this.router.url).queryParams;
+
+    if (!queryParams['code'] || !queryParams['name']) {
+      alert("Debe ingresar desde el home.");
       this.router.navigate(['/']);
+      return;
     }
-    this.noAdmin.set(!localStorage.getItem('adminName'));
 
-    const state = history.state as {
-      code: string;
-      players: string[];
-      fromGame: boolean | undefined;
-    };
+    await this.signalRService.reconnect(queryParams['code'], queryParams['name']);
 
-    this.signalRService.onPlayerJoined((playerName) => {
-      console.log('Un jugador se ha unido: ' + playerName);
-      this.signalRService.updatePlayers(this.code());
-    });
+    this.code.set(queryParams['code']);
+    this.name.set(queryParams['name']);
 
-    this.signalRService.onPlayerLeft((playerName) => {
-      console.log('Un jugador se ha ido: ' + playerName);
-      if (name === this.players()[1] && playerName === this.players()[0]) {
-        this.noAdmin.set(false);
-        localStorage.setItem('adminName', name);
-        localStorage.removeItem('name');
-      }
-      this.players.update((players) => players.filter((p) => p !== playerName));
-    });
-
-    this.signalRService.onGameStarted((role, urlImage) => {
+    this.signalRService.onGameStarted((role) => {
       if (role) {
-        this.router.navigate(['/game'], {
-          state: {
-            role: role,
-            urlImage: urlImage,
-            code: this.code(),
-            noAdmin: this.noAdmin(),
-            selectedNumberImpostors: this.selectedNumberImpostors(),
-            selectedCategory: this.selectedCategory(),
-          },
-        });
-        this.inGame = true;
+        this.router.navigate(['/game'], { queryParams: {
+          code: queryParams['code'],
+          name: queryParams['name'],
+        }});
       } else {
         alert('Ups algo ha salido mal.');
         this.router.navigate(['/']);
       }
     });
 
-    this.signalRService.onUpdatePlayers((players) => {
+    this.signalRService.onReceivePlayers((players) => {
       this.players.set(players);
+      if (players.filter((player) => player.name == this.name())[0].isAdmin) {
+        this.noAdmin.set(false);
+      } else {
+        this.noAdmin.set(true);
+      }
     })
 
-    if (state) {
-      this.code.set(state.code);
-      this.players.set(state.players);
-    }
+    this.signalRService.onGoHome(() => {
+      this.router.navigate(['/']);
+    })
 
-    if (state.fromGame) {
-      this.code.set(state.code);
-      this.signalRService.updatePlayers(state.code);
-    }
+    this.signalRService.onReceiveConfiguration((config, value) => {
+      if (config == "category") {
+        this.selectedCategory.set(value as string);
+      } else if (config == "numberImpostors") {
+        this.selectedNumberImpostors.set(value as number);
+      } else if (config == "virtualVoting") {
+        this.virtualVoting.set(value as boolean);
+      } else if (config == "clue") {
+        this.clue.set(value as boolean);
+      }
+    })
 
+    if (this.noAdmin()) {
+      this.signalRService.onChargeConfiguration(this.code(), this.name());
+    }
     const categoriesResponse = await firstValueFrom(
       this.http.get<string[]>(`${this.apiUrl}/category`),
     );
     if (categoriesResponse) {
       this.categories = categoriesResponse;
-      this.selectedCategory.set(this.categories[0]);
     }
 
-    setTimeout(() => {
-      this.signalRService.onHallConnect(this.code(), name);
-    }, 500);
-  }
-
-  async ngOnDestroy() {
-    if (!this.inGame) {
-      await this.goBack();
-    }
+    this.signalRService.onUpdatePlayers(this.code(), this.name());
   }
 
   onChangeCategory(event: MatSelectChange) {
     const value = event.value;
     this.selectedCategory.set(value);
+    this.signalRService.onUpdateConfiguration(this.code(), "category", value);
   }
 
   onChangeNumberImpostors(event: MatSelectChange) {
     const value = Number(event.value);
     this.selectedNumberImpostors.set(value);
+    this.signalRService.onUpdateConfiguration(this.code(), "numberImpostors", value);
+  }
+
+  onChangeVirtualVoting(event: MatRadioChange) {
+    this.virtualVoting.set(event.value);
+    this.signalRService.onUpdateConfiguration(this.code(), "virtualVoting", event.value);
+  }
+
+  onChangeClue(event: MatRadioChange) {
+    this.clue.set(event.value);
+    this.signalRService.onUpdateConfiguration(this.code(), "clue", event.value);
   }
 
   copyCode(event: Event) {
@@ -140,22 +140,8 @@ export class Hall {
   }
 
   async goBack() {
-    if (!localStorage.getItem('name') && !localStorage.getItem('adminName')) {
-      return;
-    }
     try {
-      const response = await firstValueFrom(
-        this.http.delete(`${this.apiUrl}/hall/${this.code()}`, {
-          params: {
-            name: localStorage.getItem('name') || localStorage.getItem('adminName') || '',
-          },
-        }),
-      );
-      if (response) {
-        localStorage.removeItem('name');
-        localStorage.removeItem('adminName');
-        this.router.navigate(['/']);
-      }
+      this.signalRService.onLeaveRoom(this.code(), this.name());
     } catch (error) {
       console.error('Error al salir de la sala:', error);
     }
@@ -166,7 +152,7 @@ export class Hall {
       alert('Debes seleccionar un número de impostores');
       return;
     }
-    if (this.players().length < this.selectedNumberImpostors() + 1) {
+    if (this.players().length <= this.selectedNumberImpostors() + 1) {
       alert('No hay suficientes jugadores para el número de impostores seleccionado');
       return;
     }
@@ -175,5 +161,18 @@ export class Hall {
       this.selectedNumberImpostors(),
       this.selectedCategory(),
     );
+  }
+
+  deletePlayer(playerName: string) {
+    if (!this.noAdmin()) {
+      this.deletingPlayer.set('');
+      this.signalRService.onLeaveRoom(this.code(), playerName);
+    }
+  }
+
+  changeDeletingPlayer(value: string) {
+    if (!this.noAdmin()) {
+      this.deletingPlayer.set(value);
+    }
   }
 }

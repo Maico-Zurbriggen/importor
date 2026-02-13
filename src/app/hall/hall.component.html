@@ -9,11 +9,16 @@
         Código de sala: <span class="code">{{ code() }}</span>
       </p>
     </section>
-    <mat-select [disabled]="noAdmin()" class="mat-select" (selectionChange)="onChangeCategory($event)" [value]="selectedCategory()">
-      @for(category of categories; track category){
-      <mat-option [value]="category">
-        {{ category }}
-      </mat-option>
+    <mat-select
+      [disabled]="noAdmin()"
+      class="mat-select"
+      (selectionChange)="onChangeCategory($event)"
+      [value]="selectedCategory()"
+    >
+      @for (category of categories; track category) {
+        <mat-option [value]="category">
+          {{ category }}
+        </mat-option>
       }
     </mat-select>
     <mat-select
@@ -26,16 +31,54 @@
       <mat-option [value]="1"> 1 </mat-option>
       <mat-option [value]="2"> 2 </mat-option>
     </mat-select>
+    <mat-radio-group
+      [class]="'mat-radio-group' + (noAdmin() ? ' disabled' : '')"
+      [value]="virtualVoting()"
+      (change)="onChangeVirtualVoting($event)"
+      [disabled]="noAdmin()"
+    >
+      <mat-label>Votación virtual:</mat-label>
+      <mat-radio-button [value]="true"> Sí </mat-radio-button>
+      <mat-radio-button [value]="false"> No </mat-radio-button>
+    </mat-radio-group>
+    <mat-radio-group
+      [class]="'mat-radio-group' + (noAdmin() ? ' disabled' : '')"
+      [value]="clue()"
+      (change)="onChangeClue($event)"
+      [disabled]="noAdmin()"
+    >
+      <mat-label>Pista:</mat-label>
+      <mat-radio-button [value]="true"> Sí </mat-radio-button>
+      <mat-radio-button [value]="false"> No </mat-radio-button>
+    </mat-radio-group>
   </section>
   <section class="players-container">
-    @for(player of players(); track player; let i = $index) {
-    <section class="player-container" [ngClass]="'player' + (i + 1)">
-      <p>{{ player }}</p>
-      @if(i === 0){
-      <p>Admin</p>
-      }
-    </section>
+    @for (player of players(); track player; let i = $index) {
+      <section
+        class="player-container"
+        [ngClass]="'player' + (i + 1)"
+        (click)="changeDeletingPlayer(deletingPlayer().length > 0 ? '' : player.name)"
+      >
+        @if (deletingPlayer() != player.name) {
+          <p>{{ player.name }}</p>
+          @if (player.isAdmin) {
+            <p>Admin</p>
+          }
+        } @else {
+          <button mat-icon-button aria-label="Eliminar jugador" (click)="deletePlayer(player.name)">
+            <mat-icon>delete</mat-icon>
+          </button>
+        }
+      </section>
     }
   </section>
-  <button mat-raised-button color="primary" class="btn" [disabled]="noAdmin()" (click)="startGame()">Jugar</button>
+  <button
+    mat-raised-button
+    color="primary"
+    class="btn"
+    [disabled]="noAdmin()"
+    (click)="startGame()"
+  >
+    Jugar
+  </button>
 </section>
