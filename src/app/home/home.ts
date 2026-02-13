@@ -1,59 +1,77 @@
-import { Component } from '@angular/core';
-import { MatButtonModule } from '@angular/material/button';
-import { MatInputModule } from '@angular/material/input';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { ReactiveFormsModule, FormControl, Validators } from '@angular/forms';
+import { Component, signal, inject } from '@angular/core';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { JoinRoomDialog } from '../joinRoomDialog/joinRoomDialog';
 import { Router } from '@angular/router';
-import { inject } from '@angular/core';
 import { SignalRService } from '../../services/signalr.service';
+import { FormComponent } from '../../components/form.component';
 
 @Component({
   selector: 'home',
   standalone: true,
-  imports: [
-    MatButtonModule,
-    MatInputModule,
-    MatFormFieldModule,
-    ReactiveFormsModule,
-    MatDialogModule,
-  ],
-  templateUrl: './home.component.html',
+  imports: [MatDialogModule, FormComponent],
+  template: `<app-form
+    [fields]="formFields"
+    [buttons]="formButtons"
+    (buttonClick)="handleButtonClick($event)"
+    (formChange)="onFormChange($event)"
+  ></app-form>`,
 })
 export class Home {
   router = inject(Router);
-  nameControl = new FormControl('', Validators.required);
-  
+  name = signal<string>('');
+
+  formFields = [{ control: 'controlName', label: 'Nombre', validators: ['required'] }];
+  formButtons = [
+    { action: 'createRoom', text: 'Crear Sala', disabled: true },
+    { action: 'joinRoom', text: 'Unirse a Sala', disabled: true },
+  ];
+
   constructor(
     private signalRService: SignalRService,
-    private dialog: MatDialog
+    private dialog: MatDialog,
   ) {}
 
   ngOnInit() {
     this.signalRService.onEnterRoom((code: string) => {
-      this.router.navigate(['/hall'], { queryParams: { code, name: this.nameControl.value } });
-    })
+      this.router.navigate(['/hall'], { queryParams: { code, name: this.name() } });
+    });
   }
 
-  createRoom() {
-    if (this.nameControl.value && this.nameControl.valid) {
-      try {
-        this.signalRService.onCreateRoom(this.nameControl.value);
-      } catch (error) {
-        console.error('Error al crear la sala:', error);
-      }
+  formValue: any = {};
+  formValid = false;
+
+  onFormChange(event: { value: any; valid: boolean }) {
+    this.formValue = event.value;
+    this.formValid = event.valid;
+
+    this.formButtons = this.formButtons.map((btn) => {
+      return { ...btn, disabled: !this.formValue.controlName };
+    });
+  }
+
+  handleButtonClick(event: { action: string; formValue: any }) {
+    this.name.set(event.formValue.controlName);
+    if (event.action == 'createRoom') {
+      this.createRoom(event.formValue.controlName);
+    } else if (event.action == 'joinRoom') {
+      this.joinRoom(event.formValue.controlName);
     }
   }
 
-  joinRoom() {
-    if (this.nameControl.valid && this.nameControl.value) {
-      this.dialog.open(JoinRoomDialog, {
-        width: '400px',
-        data: {
-          name: this.nameControl.value,
-        },
-      });
+  createRoom(name: string) {
+    try {
+      this.signalRService.onCreateRoom(name);
+    } catch (error) {
+      console.error('Error al crear la sala:', error);
     }
+  }
+
+  joinRoom(name: string) {
+    this.dialog.open(JoinRoomDialog, {
+      width: '400px',
+      data: {
+        name,
+      },
+    });
   }
 }
