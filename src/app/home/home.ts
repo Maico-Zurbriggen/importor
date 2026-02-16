@@ -20,10 +20,10 @@ export class Home {
   router = inject(Router);
   name = signal<string>('');
 
-  formFields = [{ control: 'controlName', label: 'Nombre', validators: ['required'] }];
+  formFields = [{ control: 'controlName', label: 'Nombre', validators: ['required'], class: 'field' }];
   formButtons = [
-    { action: 'createRoom', text: 'Crear Sala', disabled: true },
-    { action: 'joinRoom', text: 'Unirse a Sala', disabled: true },
+    { action: 'createRoom', text: 'Crear Sala', disabled: true, class: 'btn' },
+    { action: 'joinRoom', text: 'Unirse a Sala', disabled: true, class: 'btn' },
   ];
 
   constructor(

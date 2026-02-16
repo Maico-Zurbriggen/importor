@@ -92,6 +92,8 @@ button.btn-fixed {
 button.btn-dialog {
     background-color: var(--game-background) !important;
     color: var(--game-text) !important;
+    width: 100% !important;
+    height: 50px !important;
 }
 
 button.btn-dialog:disabled {

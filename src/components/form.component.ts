@@ -11,7 +11,7 @@ import { ReactiveFormsModule, FormControl, Validators, FormGroup } from '@angula
   template: `
     <section class="center" [formGroup]="form">
       @for (field of fields; track field.control) {
-        <mat-form-field class="field" appearance="outline">
+        <mat-form-field [class]="field.class || ''" appearance="outline">
           <mat-label class="label">{{ field.label }} </mat-label>
           <input type="{{ field.type || 'text' }}" matInput [formControlName]="field.control" />
         </mat-form-field>
@@ -21,9 +21,9 @@ import { ReactiveFormsModule, FormControl, Validators, FormGroup } from '@angula
         <button
           mat-raised-button
           color="primary"
-          class="btn"
+          [class]="button.class"
           (click)="onButtonClick(button)"
-          [disabled]="button.disabled || !form.valid"
+          [disabled]="button.disabled ? !form.valid : false"
         >
           {{ button.text }}
         </button>
@@ -32,10 +32,16 @@ import { ReactiveFormsModule, FormControl, Validators, FormGroup } from '@angula
   `,
 })
 export class FormComponent {
-  @Input() fields: { control: string, label: string, type?: string, validators: string[] }[] = [];
-  @Input() buttons: { text: string, action: string, disabled: boolean }[] = [];
+  @Input() fields: {
+    control: string;
+    label: string;
+    type?: string;
+    validators: (string | { name: string; args?: any })[]
+    class?: string;
+  }[] = [];
+  @Input() buttons: { text: string; action: string; disabled?: boolean; class?: string }[] = [];
 
-  @Output() buttonClick = new EventEmitter<{ action: string, formValue: any }>();
+  @Output() buttonClick = new EventEmitter<{ action: string; formValue: any }>();
   @Output() formChange = new EventEmitter<{ value: any; valid: boolean }>();
 
   form!: FormGroup;
@@ -43,16 +49,23 @@ export class FormComponent {
   ngOnInit() {
     const group: any = {};
     this.fields.forEach((field) => {
-      group[field.control] = new FormControl(
-        '',
-        field.validators.map((validator) => {
+      const validatorsFns = field.validators.map((validator) => {
+        if (typeof validator === 'string') {
           const validatorFn = (Validators as any)[validator];
           if (!validatorFn) {
             throw new Error(`Unknown validator: ${validator}`);
           }
           return validatorFn;
-        }),
-      );
+        } else {
+          const validatorFn = (Validators as any)[validator.name];
+          if (!validatorFn) {
+            throw new Error(`Unknown validator: ${validator.name}`);
+          }
+          return validatorFn(validator.args);
+        }
+      });
+
+      group[field.control] = new FormControl('', validatorsFns);
     });
     this.form = new FormGroup(group);
 
